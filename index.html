@@ -1,12 +1,851 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Request Tester Application</title>
-</head>
-<body>
-    <h1>Welcome to the Request Tester Application</h1>
-    <p>This application allows you to test various API requests.</p>
-</body>
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Propstack V1 Request Tester</title>
+    <style>
+      :root {
+        --bg: #f4f7fb;
+        --panel: #ffffff;
+        --panel-alt: #f8fafc;
+        --text: #162033;
+        --muted: #5b6880;
+        --border: #d7dfec;
+        --accent: #0f62fe;
+        --accent-strong: #0043ce;
+        --success: #198754;
+        --error: #d92d20;
+        --warning: #b54708;
+        --shadow: 0 18px 45px rgba(15, 34, 66, 0.08);
+        --radius: 18px;
+        --mono: "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        --sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: var(--sans);
+        color: var(--text);
+        background:
+          radial-gradient(circle at top left, rgba(15, 98, 254, 0.12), transparent 28%),
+          radial-gradient(circle at bottom right, rgba(25, 135, 84, 0.12), transparent 24%),
+          var(--bg);
+      }
+
+      .page {
+        width: min(1400px, calc(100% - 32px));
+        margin: 32px auto 48px;
+      }
+
+      .hero {
+        margin-bottom: 20px;
+      }
+
+      .hero h1 {
+        margin: 0 0 8px;
+        font-size: clamp(28px, 4vw, 42px);
+        line-height: 1.05;
+      }
+
+      .hero p {
+        margin: 0;
+        max-width: 760px;
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(360px, 0.9fr) minmax(520px, 1.4fr);
+        gap: 20px;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+      }
+
+      .panel-header {
+        padding: 20px 22px 12px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .panel-header h2 {
+        margin: 0 0 6px;
+        font-size: 20px;
+      }
+
+      .panel-header p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+
+      .panel-body {
+        padding: 20px 22px 22px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      .grid.two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .hint {
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      input,
+      select,
+      textarea,
+      button {
+        font: inherit;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: #fff;
+        color: var(--text);
+        padding: 12px 14px;
+        transition: border-color 140ms ease, box-shadow 140ms ease;
+      }
+
+      textarea {
+        min-height: 240px;
+        resize: vertical;
+        font-family: var(--mono);
+        line-height: 1.45;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: none;
+        border-color: rgba(15, 98, 254, 0.6);
+        box-shadow: 0 0 0 4px rgba(15, 98, 254, 0.12);
+      }
+
+      .button-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 999px;
+        padding: 11px 18px;
+        cursor: pointer;
+      }
+
+      .primary {
+        background: var(--accent);
+        color: #fff;
+        font-weight: 600;
+      }
+
+      .primary:hover {
+        background: var(--accent-strong);
+      }
+
+      .secondary {
+        background: #e8eefc;
+        color: #163672;
+      }
+
+      .ghost {
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid var(--border);
+      }
+
+      button:disabled {
+        opacity: 0.65;
+        cursor: wait;
+      }
+
+      .status-card {
+        padding: 16px;
+        border-radius: 14px;
+        background: var(--panel-alt);
+        border: 1px solid var(--border);
+      }
+
+      .status-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 8px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 12px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .badge.idle {
+        background: #eef2f7;
+        color: #465365;
+      }
+
+      .badge.success {
+        background: rgba(25, 135, 84, 0.12);
+        color: var(--success);
+      }
+
+      .badge.error {
+        background: rgba(217, 45, 32, 0.12);
+        color: var(--error);
+      }
+
+      .badge.warning {
+        background: rgba(181, 71, 8, 0.12);
+        color: var(--warning);
+      }
+
+      .meta {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .output {
+        display: grid;
+        gap: 16px;
+        margin-top: 18px;
+      }
+
+      .output-block h3 {
+        margin: 0 0 8px;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+      }
+
+      pre {
+        margin: 0;
+        padding: 14px;
+        min-height: 116px;
+        max-height: 360px;
+        overflow: auto;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: #0d1321;
+        color: #f2f6ff;
+        font-family: var(--mono);
+        font-size: 13px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      #responseBody {
+        min-height: 420px;
+        max-height: 70vh;
+      }
+
+      .json-key {
+        color: #7dd3fc;
+      }
+
+      .json-string {
+        color: #86efac;
+      }
+
+      .json-number {
+        color: #f9a8d4;
+      }
+
+      .json-boolean {
+        color: #fcd34d;
+      }
+
+      .json-null {
+        color: #c4b5fd;
+      }
+
+      .json-punctuation {
+        color: #94a3b8;
+      }
+
+      .notice {
+        margin-top: 18px;
+        padding: 14px 16px;
+        border-radius: 14px;
+        border: 1px solid rgba(181, 71, 8, 0.24);
+        background: rgba(181, 71, 8, 0.08);
+        color: #7a3c0d;
+        line-height: 1.5;
+      }
+
+      .tips {
+        display: grid;
+        gap: 10px;
+      }
+
+      .tip {
+        padding: 14px 16px;
+        border-radius: 14px;
+        background: var(--panel-alt);
+        border: 1px solid var(--border);
+      }
+
+      .tip strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .mono {
+        font-family: var(--mono);
+      }
+
+      @media (max-width: 900px) {
+        .layout,
+        .grid.two {
+          grid-template-columns: 1fr;
+        }
+
+        .page {
+          width: min(100% - 20px, 1120px);
+          margin-top: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <section class="hero">
+        <h1>Propstack V1 Request Tester</h1>
+        <p>
+          Eigenstaendige HTML-Seite zum Testen von Propstack-V1-API-Requests.
+          Du kannst API-Key, URL, Request-Methode und Body direkt eingeben und
+          den Request aus dem Browser senden.
+        </p>
+      </section>
+
+      <div class="layout">
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Request</h2>
+            <p>
+              Standard-Header <span class="mono">X-Api-Key</span> und
+              <span class="mono">Accept: application/json</span> werden
+              automatisch gesetzt.
+            </p>
+          </div>
+          <div class="panel-body">
+            <div class="grid">
+              <div>
+                <label for="apiKey">API Key</label>
+                <input
+                  id="apiKey"
+                  type="password"
+                  placeholder="dein-propstack-api-key"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+              </div>
+
+              <div class="grid two">
+                <div>
+                  <label for="method">Request Type</label>
+                  <select id="method">
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                    <option value="PUT">PUT</option>
+                    <option value="PATCH">PATCH</option>
+                    <option value="DELETE">DELETE</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="toggleApiKey">API Key anzeigen</label>
+                  <button id="toggleApiKey" class="ghost" type="button">
+                    Anzeigen
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label for="url">URL</label>
+                <input
+                  id="url"
+                  type="url"
+                  placeholder="https://api.propstack.de/v1/client_properties?per=5"
+                  spellcheck="false"
+                />
+                <div class="hint">
+                  Beispiel: <span class="mono">https://api.propstack.de/v1/client_properties</span>
+                </div>
+              </div>
+
+              <div>
+                <label for="body">Body</label>
+                <textarea
+                  id="body"
+                  placeholder='{"client_property":{"title":"Testobjekt"}}'
+                  spellcheck="false"
+                ></textarea>
+                <div class="hint">
+                  Bei JSON wird automatisch
+                  <span class="mono">Content-Type: application/json</span>
+                  gesetzt. Bei GET-Requests wird ein eingegebener Body vom
+                  Browser ignoriert.
+                </div>
+              </div>
+            </div>
+
+            <div class="button-row">
+              <button id="sendButton" class="primary" type="button">
+                Request senden
+              </button>
+              <button id="sampleButton" class="secondary" type="button">
+                Beispiel laden
+              </button>
+              <button id="formatButton" class="ghost" type="button">
+                JSON formatieren
+              </button>
+              <button id="clearButton" class="ghost" type="button">
+                Antwort leeren
+              </button>
+            </div>
+
+            <div class="notice" id="noticeBox">
+              Wenn Propstack fuer den angesprochenen Endpoint keine
+              CORS-Freigabe liefert, blockiert der Browser den Request trotz
+              korrekter Daten. In dem Fall brauchst du einen lokalen Proxy oder
+              einen API-Client wie Postman/Insomnia.
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Response</h2>
+            <p>Status, Laufzeit, Header und Response-Body werden hier angezeigt.</p>
+          </div>
+          <div class="panel-body">
+            <div class="status-card">
+              <div class="status-top">
+                <span id="statusBadge" class="badge idle">Bereit</span>
+                <div id="metaLine" class="meta">Noch kein Request gesendet.</div>
+              </div>
+              <div id="requestInfo" class="meta"></div>
+            </div>
+
+            <div class="output">
+              <div class="output-block">
+                <h3>Request Preview</h3>
+                <pre id="requestPreview">Noch kein Request vorbereitet.</pre>
+              </div>
+              <div class="output-block">
+                <h3>Response Headers</h3>
+                <pre id="responseHeaders">Noch keine Header vorhanden.</pre>
+              </div>
+              <div class="output-block">
+                <h3>Response Body</h3>
+                <pre id="responseBody">Noch keine Antwort vorhanden.</pre>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel" style="margin-top: 20px">
+        <div class="panel-header">
+          <h2>Hinweise</h2>
+          <p>Kleine Helfer, damit die Seite im Alltag schneller nutzbar ist.</p>
+        </div>
+        <div class="panel-body">
+          <div class="tips">
+            <div class="tip">
+              <strong>Lokale Speicherung</strong>
+              API-Key, URL, Methode und Body werden in
+              <span class="mono">localStorage</span> gespeichert, damit du nach
+              einem Reload weitermachen kannst.
+            </div>
+            <div class="tip">
+              <strong>Direktes Oeffnen</strong>
+              Die Datei kann direkt im Browser geoeffnet werden. Falls dein
+              Browser bei <span class="mono">file://</span> restriktiv ist,
+              serviere sie kurz lokal, z. B. ueber einen kleinen HTTP-Server.
+            </div>
+            <div class="tip">
+              <strong>Propstack Header</strong>
+              Die Seite nutzt den ueblichen Header
+              <span class="mono">X-Api-Key</span>. Zusaeztliche Custom-Header
+              sind in dieser Version bewusst nicht enthalten, damit die Seite
+              eigenstaendig und kompakt bleibt.
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const STORAGE_KEY = "propstack-v1-request-tester";
+
+      const elements = {
+        apiKey: document.getElementById("apiKey"),
+        method: document.getElementById("method"),
+        url: document.getElementById("url"),
+        body: document.getElementById("body"),
+        sendButton: document.getElementById("sendButton"),
+        sampleButton: document.getElementById("sampleButton"),
+        formatButton: document.getElementById("formatButton"),
+        clearButton: document.getElementById("clearButton"),
+        toggleApiKey: document.getElementById("toggleApiKey"),
+        statusBadge: document.getElementById("statusBadge"),
+        metaLine: document.getElementById("metaLine"),
+        requestInfo: document.getElementById("requestInfo"),
+        requestPreview: document.getElementById("requestPreview"),
+        responseHeaders: document.getElementById("responseHeaders"),
+        responseBody: document.getElementById("responseBody"),
+      };
+
+      function saveState() {
+        const payload = {
+          apiKey: elements.apiKey.value,
+          method: elements.method.value,
+          url: elements.url.value,
+          body: elements.body.value,
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        renderRequestPreview();
+      }
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return;
+          const payload = JSON.parse(raw);
+          elements.apiKey.value = payload.apiKey || "";
+          elements.method.value = payload.method || "GET";
+          elements.url.value = payload.url || "";
+          elements.body.value = payload.body || "";
+        } catch (error) {
+          console.warn("Konnte gespeicherten Zustand nicht laden:", error);
+        }
+      }
+
+      function setStatus(label, type, meta = "", requestInfo = "") {
+        elements.statusBadge.textContent = label;
+        elements.statusBadge.className = `badge ${type}`;
+        elements.metaLine.textContent = meta;
+        elements.requestInfo.textContent = requestInfo;
+      }
+
+      function maskApiKey(value) {
+        if (!value) return "(leer)";
+        if (value.length <= 8) return "*".repeat(value.length);
+        return `${value.slice(0, 4)}...${value.slice(-4)}`;
+      }
+
+      function safeJsonFormat(input) {
+        try {
+          return JSON.stringify(JSON.parse(input), null, 2);
+        } catch (_) {
+          return input;
+        }
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function highlightJson(value) {
+        let parsed;
+        try {
+          parsed = JSON.parse(value);
+        } catch (_) {
+          return escapeHtml(value);
+        }
+
+        function indent(level) {
+          return "  ".repeat(level);
+        }
+
+        function renderJsonValue(input, level) {
+          if (input === null) {
+            return '<span class="json-null">null</span>';
+          }
+
+          if (typeof input === "string") {
+            return `<span class="json-string">&quot;${escapeHtml(input)}&quot;</span>`;
+          }
+
+          if (typeof input === "number") {
+            return `<span class="json-number">${String(input)}</span>`;
+          }
+
+          if (typeof input === "boolean") {
+            return `<span class="json-boolean">${String(input)}</span>`;
+          }
+
+          if (Array.isArray(input)) {
+            if (!input.length) {
+              return '<span class="json-punctuation">[]</span>';
+            }
+
+            const items = input
+              .map((entry) => `${indent(level + 1)}${renderJsonValue(entry, level + 1)}`)
+              .join('<span class="json-punctuation">,</span>\n');
+
+            return (
+              '<span class="json-punctuation">[</span>\n' +
+              items +
+              "\n" +
+              `${indent(level)}<span class="json-punctuation">]</span>`
+            );
+          }
+
+          const entries = Object.entries(input);
+          if (!entries.length) {
+            return '<span class="json-punctuation">{}</span>';
+          }
+
+          const properties = entries
+            .map(([key, entryValue]) => {
+              return (
+                `${indent(level + 1)}` +
+                `<span class="json-key">&quot;${escapeHtml(key)}&quot;</span>` +
+                '<span class="json-punctuation">: </span>' +
+                renderJsonValue(entryValue, level + 1)
+              );
+            })
+            .join('<span class="json-punctuation">,</span>\n');
+
+          return (
+            '<span class="json-punctuation">{</span>\n' +
+            properties +
+            "\n" +
+            `${indent(level)}<span class="json-punctuation">}</span>`
+          );
+        }
+
+        return renderJsonValue(parsed, 0);
+      }
+
+      function renderOutput(element, value, useHighlight = false) {
+        if (useHighlight) {
+          element.innerHTML = highlightJson(value);
+          return;
+        }
+        element.textContent = value;
+      }
+
+      function buildHeadersPreview(hasJsonBody) {
+        const lines = [
+          "Accept: application/json",
+          `X-Api-Key: ${maskApiKey(elements.apiKey.value.trim())}`,
+        ];
+        if (hasJsonBody) {
+          lines.push("Content-Type: application/json");
+        }
+        return lines.join("\n");
+      }
+
+      function renderRequestPreview() {
+        const method = elements.method.value;
+        const url = elements.url.value.trim() || "(keine URL)";
+        const body = elements.body.value.trim();
+        const looksLikeJson = body && isValidJson(body);
+        const requestLines = [
+          `${method} ${url}`,
+          "",
+          buildHeadersPreview(Boolean(looksLikeJson)),
+        ];
+
+        if (body) {
+          requestLines.push("", looksLikeJson ? safeJsonFormat(body) : body);
+        }
+
+        elements.requestPreview.textContent = requestLines.join("\n");
+      }
+
+      function isValidJson(value) {
+        try {
+          JSON.parse(value);
+          return true;
+        } catch (_) {
+          return false;
+        }
+      }
+
+      function formatHeaders(headers) {
+        if (!headers || !headers.length) {
+          return "Keine Header empfangen.";
+        }
+        return headers.map(([key, value]) => `${key}: ${value}`).join("\n");
+      }
+
+      async function sendRequest() {
+        const apiKey = elements.apiKey.value.trim();
+        const method = elements.method.value;
+        const url = elements.url.value.trim();
+        const body = elements.body.value.trim();
+
+        if (!apiKey) {
+          setStatus("Fehler", "error", "API Key fehlt.");
+          elements.responseBody.textContent = "Bitte zuerst einen API Key eintragen.";
+          return;
+        }
+
+        if (!url) {
+          setStatus("Fehler", "error", "URL fehlt.");
+          elements.responseBody.textContent = "Bitte zuerst eine Request-URL eintragen.";
+          return;
+        }
+
+        const headers = {
+          Accept: "application/json",
+          "X-Api-Key": apiKey,
+        };
+
+        const fetchOptions = {
+          method,
+          headers,
+        };
+
+        if (body && method !== "GET" && method !== "HEAD") {
+          if (isValidJson(body)) {
+            fetchOptions.headers["Content-Type"] = "application/json";
+            fetchOptions.body = JSON.stringify(JSON.parse(body));
+          } else {
+            fetchOptions.body = body;
+          }
+        }
+
+        if (body && method === "GET") {
+          console.warn("GET-Request mit Body erkannt. Browser sendet fuer GET keinen Body.");
+        }
+
+        renderRequestPreview();
+        setStatus("Sende...", "warning", "Request laeuft.");
+        renderOutput(elements.responseHeaders, "Warte auf Header...");
+        renderOutput(elements.responseBody, "Warte auf Antwort...");
+        elements.sendButton.disabled = true;
+
+        const startedAt = performance.now();
+
+        try {
+          const response = await fetch(url, fetchOptions);
+          const elapsedMs = Math.round(performance.now() - startedAt);
+          const responseText = await response.text();
+          const responseHeaders = Array.from(response.headers.entries());
+          const contentType = response.headers.get("content-type") || "";
+          let formattedBody = responseText || "(leere Antwort)";
+
+          if (contentType.includes("application/json") && responseText) {
+            formattedBody = safeJsonFormat(responseText);
+          }
+
+          renderOutput(elements.responseHeaders, formatHeaders(responseHeaders));
+          renderOutput(
+            elements.responseBody,
+            formattedBody,
+            contentType.includes("application/json") && Boolean(responseText),
+          );
+
+          const statusType = response.ok ? "success" : "error";
+          setStatus(
+            `${response.status} ${response.statusText || ""}`.trim(),
+            statusType,
+            `${elapsedMs} ms`,
+            `${method} ${url}`,
+          );
+        } catch (error) {
+          const elapsedMs = Math.round(performance.now() - startedAt);
+          const message = error && error.message ? error.message : String(error);
+          renderOutput(elements.responseHeaders, "Keine Header verfuegbar.");
+          renderOutput(
+            elements.responseBody,
+            `${message}\n\nMoegliche Ursache: CORS-Blockade, Netzwerkfehler oder ungueltige URL.`,
+          );
+          setStatus("Netzwerkfehler", "error", `${elapsedMs} ms`, `${method} ${url}`);
+        } finally {
+          elements.sendButton.disabled = false;
+        }
+      }
+
+      function loadSample() {
+        elements.method.value = "GET";
+        elements.url.value = "https://api.propstack.de/v1/client_properties?per=5";
+        elements.body.value = "";
+        saveState();
+      }
+
+      function formatJsonBody() {
+        const raw = elements.body.value.trim();
+        if (!raw) return;
+        if (!isValidJson(raw)) {
+          setStatus("Hinweis", "warning", "Body ist kein gueltiges JSON.");
+          return;
+        }
+        elements.body.value = safeJsonFormat(raw);
+        saveState();
+      }
+
+      function clearResponse() {
+        setStatus("Bereit", "idle", "Noch kein Request gesendet.", "");
+        renderOutput(elements.responseHeaders, "Noch keine Header vorhanden.");
+        renderOutput(elements.responseBody, "Noch keine Antwort vorhanden.");
+      }
+
+      function toggleApiKeyVisibility() {
+        const isHidden = elements.apiKey.type === "password";
+        elements.apiKey.type = isHidden ? "text" : "password";
+        elements.toggleApiKey.textContent = isHidden ? "Verbergen" : "Anzeigen";
+      }
+
+      [elements.apiKey, elements.method, elements.url, elements.body].forEach((element) => {
+        element.addEventListener("input", saveState);
+      });
+
+      elements.sendButton.addEventListener("click", sendRequest);
+      elements.sampleButton.addEventListener("click", loadSample);
+      elements.formatButton.addEventListener("click", formatJsonBody);
+      elements.clearButton.addEventListener("click", clearResponse);
+      elements.toggleApiKey.addEventListener("click", toggleApiKeyVisibility);
+
+      loadState();
+      renderRequestPreview();
+      clearResponse();
+    </script>
+  </body>
 </html>
